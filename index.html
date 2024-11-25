@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secret Santa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #ffefba, #ffffff);
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+  <div class="bg-red-100 shadow-lg rounded-lg p-6 w-full max-w-md border-4 border-green-500">
+    <h1 class="text-3xl font-bold text-center text-red-700 mb-4">🎅 Secret Santa 🎄</h1>
+    <div class="mb-6">
+      <textarea id="namesInput" 
+        class="w-full border border-green-400 rounded-lg p-3 text-gray-700 bg-green-50 focus:outline-none focus:ring-2 focus:ring-red-500" 
+        placeholder="Enter names, one per line"></textarea>
+      <button id="generateButton" 
+        class="w-full mt-4 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors shadow-md">
+        🎁 Generate Secret Santa 🎁
+      </button>
+    </div>
+    <div id="resultContainer" class="hidden text-center">
+      <h2 class="text-xl font-semibold text-green-700 mb-4">🎄 See Your Secret Santa 🎄</h2>
+      <div id="buttonsContainer" class="flex flex-wrap gap-2 justify-center"></div>
+      <p id="resultMessage" class="mt-4 text-lg text-red-600 font-semibold"></p>
+    </div>
+  </div>
+  <script>
+    document.getElementById('generateButton').addEventListener('click', () => {
+      const input = document.getElementById('namesInput').value.trim();
+      const names = input.split('\n').map(name => name.trim()).filter(name => name);
+
+      if (names.length < 2) {
+        alert('Please enter at least two names.');
+        return;
+      }
+
+      const assignments = assignSecretSanta(names);
+      displayButtons(names, assignments);
+    });
+
+    function assignSecretSanta(names) {
+      const givers = [...names];
+      const receivers = [...names];
+      const result = {};
+
+      // Shuffle receivers
+      for (let i = receivers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [receivers[i], receivers[j]] = [receivers[j], receivers[i]];
+      }
+
+      // Ensure no one is their own Secret Santa
+      for (let i = 0; i < givers.length; i++) {
+        if (givers[i] === receivers[i]) {
+          return assignSecretSanta(names);
+        }
+        result[givers[i]] = receivers[i];
+      }
+
+      return result;
+    }
+
+    function displayButtons(names, assignments) {
+      const buttonsContainer = document.getElementById('buttonsContainer');
+      const resultContainer = document.getElementById('resultContainer');
+      const resultMessage = document.getElementById('resultMessage');
+
+      buttonsContainer.innerHTML = '';
+      resultMessage.textContent = '';
+      resultContainer.classList.remove('hidden');
+
+      names.forEach(name => {
+        const button = document.createElement('button');
+        button.textContent = `🎅 Who is ${name} buying for?`;
+        button.className = 
+          'bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors shadow-md';
+        button.addEventListener('click', () => {
+          const allButtons = buttonsContainer.querySelectorAll('button');
+
+          // Show Secret Santa and disable all buttons
+          allButtons.forEach(btn => btn.classList.add('hidden'));
+          button.classList.remove('hidden');
+          resultMessage.textContent = `🎄 ${name}, your Secret Santa is: ${assignments[name]} 🎁`;
+
+          // Change to "Hide" button
+          button.textContent = `🎁 Hide for ${name}`;
+          button.className = 
+            'bg-green-800 text-white py-2 px-4 rounded-lg hover:bg-green-900 transition-colors shadow-md';
+
+          // Disable after hiding
+          button.addEventListener('click', () => {
+            resultMessage.textContent = '';
+            button.textContent = `🎅 Who is ${name} buying for?`;
+            button.className = 
+              'bg-gray-400 text-white py-2 px-4 rounded-lg cursor-not-allowed shadow-md';
+            allButtons.forEach(btn => btn.classList.remove('hidden'));
+            button.disabled = true; // Prevent further clicks
+          }, { once: true });
+        });
+        buttonsContainer.appendChild(button);
+      });
+    }
+  </script>
+</body>
+</html>
