@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Secret Santa</title>
+  <title>Secret Santa Generator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -12,99 +12,77 @@
   </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
-  <div class="bg-red-100 shadow-lg rounded-lg p-4 sm:p-6 w-full max-w-md border-4 border-green-500">
-    <h1 class="text-2xl sm:text-3xl font-bold text-center text-red-700 mb-4">🎅 Secret Santa 🎄</h1>
+  <div class="bg-red-100 shadow-lg rounded-lg p-6 w-full max-w-md border-4 border-green-500">
+    <h1 class="text-2xl sm:text-3xl font-bold text-center text-red-700 mb-4">🎅 Secret Santa Generator 🎄</h1>
     <div class="mb-6">
-      <textarea id="namesInput" 
-        class="w-full border border-green-400 rounded-lg p-3 text-sm sm:text-base text-gray-700 bg-green-50 focus:outline-none focus:ring-2 focus:ring-red-500" 
-        placeholder="Enter names, one per line"></textarea>
-      <button id="generateButton" 
-        class="w-full mt-4 bg-green-600 text-white py-2 px-4 text-sm sm:text-base rounded-lg hover:bg-green-700 transition-colors shadow-md">
-        🎁 Generate Secret Santa 🎁
-      </button>
+      <label for="names" class="text-lg font-semibold text-red-600">Enter names (comma separated):</label>
+      <input id="names" type="text" placeholder="e.g. Alice, Bob, Charlie" 
+        class="w-full border border-green-400 rounded-lg p-3 text-sm sm:text-base text-gray-700 bg-green-50 focus:outline-none focus:ring-2 focus:ring-red-500" />
     </div>
-    <div id="resultContainer" class="hidden text-center">
-      <h2 class="text-lg sm:text-xl font-semibold text-green-700 mb-4">🎄 See Your Secret Santa 🎄</h2>
-      <div id="buttonsContainer" class="flex flex-wrap gap-2 justify-center"></div>
-      <p id="resultMessage" class="mt-4 text-base sm:text-lg text-red-600 font-semibold"></p>
+    <button id="generateButton" 
+      class="w-full bg-blue-600 text-white py-2 px-4 text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+      Generate Codes
+    </button>
+    <div id="codesContainer" class="mt-6 hidden">
+      <h2 class="text-xl sm:text-2xl font-semibold text-green-700 mb-4">🎁 Generated Codes 🎁</h2>
+      <ul id="codesList" class="space-y-2 text-lg text-gray-800"></ul>
     </div>
   </div>
+
   <script>
-    document.getElementById('generateButton').addEventListener('click', () => {
-      const input = document.getElementById('namesInput').value.trim();
-      const names = input.split('\n').map(name => name.trim()).filter(name => name);
+    // Secret key for encryption/decryption
+    const secretKey = 'mySecretKey123'; 
 
-      if (names.length < 2) {
-        alert('Please enter at least two names.');
-        return;
+    // XOR Encryption function
+    function xorEncryptDecrypt(input, key) {
+      let result = '';
+      for (let i = 0; i < input.length; i++) {
+        result += String.fromCharCode(input.charCodeAt(i) ^ key.charCodeAt(i % key.length));
       }
-
-      const assignments = assignSecretSanta(names);
-      displayButtons(names, assignments);
-    });
-
-    function assignSecretSanta(names) {
-      const givers = [...names];
-      const receivers = [...names];
-      const result = {};
-
-      // Shuffle receivers
-      for (let i = receivers.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [receivers[i], receivers[j]] = [receivers[j], receivers[i]];
-      }
-
-      // Ensure no one is their own Secret Santa
-      for (let i = 0; i < givers.length; i++) {
-        if (givers[i] === receivers[i]) {
-          return assignSecretSanta(names);
-        }
-        result[givers[i]] = receivers[i];
-      }
-
       return result;
     }
 
-    function displayButtons(names, assignments) {
-      const buttonsContainer = document.getElementById('buttonsContainer');
-      const resultContainer = document.getElementById('resultContainer');
-      const resultMessage = document.getElementById('resultMessage');
+    // Function to generate random pairings
+    function generatePairings(names) {
+      const shuffledNames = names.sort(() => Math.random() - 0.5);
+      const pairings = {};
 
-      buttonsContainer.innerHTML = '';
-      resultMessage.textContent = '';
-      resultContainer.classList.remove('hidden');
-
-      names.forEach(name => {
-        const button = document.createElement('button');
-        button.textContent = `🎅 Who is ${name} buying for?`;
-        button.className = 
-          'bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors shadow-md';
-        button.addEventListener('click', () => {
-          const allButtons = buttonsContainer.querySelectorAll('button');
-
-          // Show Secret Santa and disable all buttons
-          allButtons.forEach(btn => btn.classList.add('hidden'));
-          button.classList.remove('hidden');
-          resultMessage.textContent = `🎄 ${name}, your Secret Santa is: ${assignments[name]} 🎁`;
-
-          // Change to "Hide" button
-          button.textContent = `🎁 Hide for ${name}`;
-          button.className = 
-            'bg-green-800 text-white py-2 px-4 rounded-lg hover:bg-green-900 transition-colors shadow-md';
-
-          // Disable after hiding
-          button.addEventListener('click', () => {
-            resultMessage.textContent = '';
-            button.textContent = `🎅 Who is ${name} buying for?`;
-            button.className = 
-              'bg-gray-400 text-white py-2 px-4 rounded-lg cursor-not-allowed shadow-md';
-            allButtons.forEach(btn => btn.classList.remove('hidden'));
-            button.disabled = true; // Prevent further clicks
-          }, { once: true });
-        });
-        buttonsContainer.appendChild(button);
+      names.forEach((name, index) => {
+        const pairedWith = shuffledNames[(index + 1) % names.length];
+        pairings[name] = pairedWith;
       });
+
+      return pairings;
     }
+
+    // Handle the generate button click
+    document.getElementById('generateButton').addEventListener('click', () => {
+      const namesInput = document.getElementById('names').value.trim();
+      if (!namesInput) {
+        alert('Please enter names');
+        return;
+      }
+
+      const names = namesInput.split(',').map(name => name.trim());
+      const pairings = generatePairings(names);
+      const codesList = document.getElementById('codesList');
+      const codesContainer = document.getElementById('codesContainer');
+
+      codesList.innerHTML = '';
+      Object.keys(pairings).forEach((name) => {
+        const uniqueCode = Math.random().toString(36).substring(2, 8); // Generate unique code
+        const encryptedPairing = xorEncryptDecrypt(pairings[name], secretKey); // Encrypt pairing
+
+        // Store the encrypted pairing in localStorage with the unique code
+        localStorage.setItem(uniqueCode, encryptedPairing);
+
+        codesList.innerHTML += `
+          <li><strong>${name}</strong> - Unique code: <strong>${uniqueCode}</strong></li>
+        `;
+      });
+
+      codesContainer.classList.remove('hidden');
+    });
   </script>
 </body>
 </html>
