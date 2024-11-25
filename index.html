@@ -3,85 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Secret Santa Generator</title>
+  <title>Generate Secret Santa Codes</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      background: linear-gradient(135deg, #ffefba, #ffffff);
-    }
-  </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
+<body class="flex items-center justify-center min-h-screen bg-gradient-to-br from-yellow-100 to-white">
   <div class="bg-red-100 shadow-lg rounded-lg p-6 w-full max-w-md border-4 border-green-500">
-    <h1 class="text-2xl sm:text-3xl font-bold text-center text-red-700 mb-4">🎅 Secret Santa Generator 🎄</h1>
-    <div class="mb-6">
-      <label for="names" class="text-lg font-semibold text-red-600">Enter names (comma separated):</label>
-      <input id="names" type="text" placeholder="e.g. Alice, Bob, Charlie" 
-        class="w-full border border-green-400 rounded-lg p-3 text-sm sm:text-base text-gray-700 bg-green-50 focus:outline-none focus:ring-2 focus:ring-red-500" />
-    </div>
+    <h1 class="text-2xl sm:text-3xl font-bold text-center text-red-700 mb-4">🎅 Generate Secret Santa Codes 🎄</h1>
+
+    <textarea id="names" 
+      class="w-full border border-red-400 rounded-lg p-3 text-sm sm:text-base text-gray-700 bg-red-50 focus:outline-none focus:ring-2 focus:ring-green-500 mb-4"
+      placeholder="Enter names separated by commas"></textarea>
+    
     <button id="generateButton" 
-      class="w-full bg-blue-600 text-white py-2 px-4 text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+      class="w-full bg-blue-600 text-white py-2 px-4 text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors shadow-md mb-4">
       Generate Codes
     </button>
-    <div id="codesContainer" class="mt-6 hidden">
-      <h2 class="text-xl sm:text-2xl font-semibold text-green-700 mb-4">🎁 Generated Codes 🎁</h2>
-      <ul id="codesList" class="space-y-2 text-lg text-gray-800"></ul>
-    </div>
+
+    <ul id="codesList" class="list-disc pl-5 text-gray-800"></ul>
   </div>
 
   <script>
-    // Secret key for encryption/decryption
-    const secretKey = 'mySecretKey123'; 
-
-    // XOR Encryption function
-    function xorEncryptDecrypt(input, key) {
-      let result = '';
-      for (let i = 0; i < input.length; i++) {
-        result += String.fromCharCode(input.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-      }
-      return result;
+    function encryptString(input) {
+        const result = [];
+        let total = 0;
+        for (let i = 0; i < input.length; i++) {
+            total += input.charCodeAt(i);
+            if ((i + 1) % Math.ceil(input.length / 5) === 0 || i === input.length - 1) {
+                result.push(total);
+                total = 0;
+            }
+        }
+        return result.map((num, index) => num + (index + 1) * 10);
     }
 
-    // Function to generate random pairings
-    function generatePairings(names) {
-      const shuffledNames = names.sort(() => Math.random() - 0.5);
-      const pairings = {};
-
-      names.forEach((name, index) => {
-        const pairedWith = shuffledNames[(index + 1) % names.length];
-        pairings[name] = pairedWith;
-      });
-
-      return pairings;
-    }
-
-    // Handle the generate button click
     document.getElementById('generateButton').addEventListener('click', () => {
       const namesInput = document.getElementById('names').value.trim();
       if (!namesInput) {
         alert('Please enter names');
         return;
       }
-
       const names = namesInput.split(',').map(name => name.trim());
-      const pairings = generatePairings(names);
       const codesList = document.getElementById('codesList');
-      const codesContainer = document.getElementById('codesContainer');
-
       codesList.innerHTML = '';
-      Object.keys(pairings).forEach((name) => {
-        const uniqueCode = Math.random().toString(36).substring(2, 8); // Generate unique code
-        const encryptedPairing = xorEncryptDecrypt(pairings[name], secretKey); // Encrypt pairing
 
-        // Store the encrypted pairing in localStorage with the unique code
-        localStorage.setItem(uniqueCode, encryptedPairing);
-
-        codesList.innerHTML += `
-          <li><strong>${name}</strong> - Unique code: <strong>${uniqueCode}</strong></li>
-        `;
+      names.forEach((name, index) => {
+        const recipient = names[(index + 1) % names.length];
+        const code = encryptString(recipient).join('-');
+        codesList.innerHTML += `<li><span class="text-xl font-bold text-grey-700">${name}:</span> ${code} (Key: ${recipient.length})</li>`;
       });
-
-      codesContainer.classList.remove('hidden');
     });
   </script>
 </body>
