@@ -14,11 +14,6 @@
       class="w-full border border-red-400 rounded-lg p-3 text-sm sm:text-base text-gray-700 bg-red-50 focus:outline-none focus:ring-2 focus:ring-green-500 mb-4"
       placeholder="Enter your unique code" />
 
-    <input id="nameLengthInput" 
-      type="number" 
-      class="w-full border border-red-400 rounded-lg p-3 text-sm sm:text-base text-gray-700 bg-red-50 focus:outline-none focus:ring-2 focus:ring-green-500 mb-4"
-      placeholder="Enter the key" />
-
     <button id="checkCodeButton" 
       class="w-full bg-blue-600 text-white py-2 px-4 text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors shadow-md">
       🎁 Reveal My Secret Santa 🎁
@@ -31,54 +26,41 @@
   </div>
 
   <script>
-    function encryptString(input) {
-      const result = [];
-      let total = 0;
+  // Function to decrypt an encrypted string
+  function decryptString(input) {
+      let result = "";
+      let counter = 0; // To track decrements within groups of 5
+
       for (let i = 0; i < input.length; i++) {
-        total += input.charCodeAt(i);
-        if ((i + 1) % Math.ceil(input.length / 5) === 0 || i === input.length - 1) {
-          result.push(total);
-          total = 0;
-        }
-      }
-      return result.map((num, index) => num + (index + 1) * 10);
-    }
+          let asciiValue = input.charCodeAt(i); // Get ASCII value
+          asciiValue -= counter; // Decrement based on counter
+          result += String.fromCharCode(asciiValue); // Convert back to character
+          counter++; // Increment counter
 
-    function decryptNumbers(numbers, originalLength) {
-      const decrypted = [];
-      const adjustedNumbers = numbers.map((num, index) => num - (index + 1) * 10);
-      let totalChars = 0;
-      for (let i = 0; i < adjustedNumbers.length; i++) {
-        let segmentTotal = adjustedNumbers[i];
-        const segmentSize = Math.ceil(originalLength / 5);
-        for (let j = 0; j < segmentSize && totalChars < originalLength; j++) {
-          const charCode = segmentTotal % 256;
-          decrypted.push(String.fromCharCode(charCode));
-          segmentTotal = (segmentTotal - charCode) / 256;
-          totalChars++;
-        }
+          if (counter === 5) {
+              counter = 0; // Reset counter after 5th character
+          }
       }
-      return decrypted.join('');
-    }
 
+      return result;
+  }
+  
     document.getElementById('checkCodeButton').addEventListener('click', () => {
       const codeInput = document.getElementById('codeInput').value.trim();
-      const nameLengthInput = document.getElementById('nameLengthInput').value.trim();
-      if (!codeInput || !nameLengthInput) {
-        alert('Please enter both the code and the name length.');
+      if (!codeInput) {
+        alert('Please enter the code.');
         return;
       }
-      const codeParts = codeInput.split('-').map(Number);
-      const nameLength = parseInt(nameLengthInput, 10);
-
+  
       try {
-        const decryptedName = decryptNumbers(codeParts, nameLength);
+        const decryptedName = decryptString(codeInput);
         document.getElementById('resultContainer').classList.remove('hidden');
         document.getElementById('resultMessage').textContent = `Your Secret Santa is: ${decryptedName}! 🎁`;
       } catch (error) {
-        alert('Invalid code or name length. Please try again.');
+        alert('Invalid code or key. Please try again.');
       }
     });
   </script>
+  
 </body>
 </html>

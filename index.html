@@ -23,17 +23,19 @@
   </div>
 
   <script>
+    // Encrypt string by altering ASCII values
     function encryptString(input) {
-        const result = [];
-        let total = 0;
-        for (let i = 0; i < input.length; i++) {
-            total += input.charCodeAt(i);
-            if ((i + 1) % Math.ceil(input.length / 5) === 0 || i === input.length - 1) {
-                result.push(total);
-                total = 0;
-            }
-        }
-        return result.map((num, index) => num + (index + 1) * 10);
+      let result = "";
+      let counter = 0;
+
+      for (let i = 0; i < input.length; i++) {
+        let asciiValue = input.charCodeAt(i);
+        asciiValue += counter; // Increment ASCII based on the counter
+        result += String.fromCharCode(asciiValue); 
+        counter = (counter + 1) % 5; // Reset after every 5 characters
+      }
+
+      return result;
     }
 
     document.getElementById('generateButton').addEventListener('click', () => {
@@ -42,14 +44,27 @@
         alert('Please enter names');
         return;
       }
-      const names = namesInput.split(',').map(name => name.trim());
+
+      const names = namesInput.split(',')
+        .map(name => name.trim())
+        .filter(name => name.length > 0); // Filter out empty names
+
+      if (names.length < 2) {
+        alert('Please enter at least two names for Secret Santa.');
+        return;
+      }
+
       const codesList = document.getElementById('codesList');
       codesList.innerHTML = '';
 
       names.forEach((name, index) => {
-        const recipient = names[(index + 1) % names.length];
-        const code = encryptString(recipient).join('-');
-        codesList.innerHTML += `<li><span class="text-xl font-bold text-grey-700">${name}:</span> ${code} (Key: ${recipient.length})</li>`;
+        const recipient = names[(index + 1) % names.length]; // Get next recipient
+        const code = encryptString(recipient); // Encrypt recipient's name
+        codesList.innerHTML += `
+          <li class="mb-2">
+            <span class="text-lg font-semibold text-gray-700">${name}:</span> 
+            <span class="font-mono bg-green-200 rounded p-1">${code}</span>
+          </li>`;
       });
     });
   </script>
